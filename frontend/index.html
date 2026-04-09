@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyMind — Gemini Academic Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+  <style>
+    /* ── Variables ─────────────────────────────────────────── */
+    :root {
+      --bg:        #0b0d12;
+      --bg2:       #12151d;
+      --bg3:       #1a1e2a;
+      --border:    #252a38;
+      --accent:    #e8ff5a;
+      --accent2:   #5afff4;
+      --accent3:   #ff5a8a;
+      --text:      #e8ecf4;
+      --text2:     #8892aa;
+      --card:      #161923;
+      --radius:    14px;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+      --api:       http://localhost:5000;
+    }
+
+    /* ── Reset & Base ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.65;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Noise texture overlay ─────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: .5;
+    }
+
+    /* ── Layout ────────────────────────────────────────────── */
+    .shell {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ───────────────────────────────────────────── */
+    .sidebar {
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 20px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 10;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 36px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      color: #0b0d12;
+      font-size: 18px;
+      font-weight: 800;
+      font-family: var(--font-head);
+    }
+    .logo-text { font-family: var(--font-head); font-weight: 800; font-size: 20px; }
+    .logo-text span { color: var(--accent); }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text2);
+      margin: 0 0 10px 8px;
+    }
+    .nav {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 28px;
+    }
+    .nav li a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: var(--text2);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all .2s;
+      cursor: pointer;
+    }
+    .nav li a:hover, .nav li a.active {
+      background: var(--bg3);
+      color: var(--text);
+    }
+    .nav li a.active { color: var(--accent); }
+    .nav li a i { width: 18px; text-align: center; }
+    .nav-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-left: auto;
+      display: none;
+    }
+    .nav li a.active .nav-dot { display: block; }
+
+    .api-config {
+      margin-top: auto;
+      padding: 14px;
+      background: var(--bg3);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .api-config label { font-size: 11px; color: var(--text2); display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+    .api-config input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+    }
+    .api-config input:focus { border-color: var(--accent); }
+
+    /* ── Main ──────────────────────────────────────────────── */
+    .main {
+      padding: 40px 48px;
+      max-width: 900px;
+    }
+
+    /* ── Page header ───────────────────────────────────────── */
+    .page-header {
+      margin-bottom: 32px;
+      animation: fadeUp .5s ease both;
+    }
+    .page-header h1 {
+      font-family: var(--font-head);
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    .page-header h1 em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .page-header p { color: var(--text2); font-size: 14px; }
+
+    /* ── Tabs ──────────────────────────────────────────────── */
+    .tab-pane { display: none; animation: fadeUp .4s ease both; }
+    .tab-pane.active { display: block; }
+
+    /* ── Cards ─────────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title i { color: var(--accent); font-size: 13px; }
+
+    /* ── Form ──────────────────────────────────────────────── */
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .field label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .08em; }
+    .field input, .field textarea, .field select {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s;
+      resize: vertical;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+    .field textarea { min-height: 120px; }
+    .field select { appearance: none; cursor: pointer; }
+
+    /* ── Buttons ───────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      transition: all .2s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0b0d12;
+    }
+    .btn-primary:hover { background: #d4eb3a; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(232,255,90,.25); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Spinner ───────────────────────────────────────────── */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(11,13,18,.4);
+      border-top-color: #0b0d12;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    .loading .spinner { display: block; }
+    .loading .btn-label { display: none; }
+
+    /* ── Output area ───────────────────────────────────────── */
+    .output {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: none;
+      animation: fadeUp .4s ease both;
+    }
+    .output.visible { display: block; }
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .output-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--accent);
+    }
+    .output-content { color: var(--text); font-size: 14px; line-height: 1.75; }
+
+    /* Markdown-like styling */
+    .output-content h1, .output-content h2, .output-content h3 {
+      font-family: var(--font-head);
+      font-weight: 700;
+      color: var(--text);
+      margin: 18px 0 8px;
+    }
+    .output-content h1 { font-size: 20px; }
+    .output-content h2 { font-size: 17px; color: var(--accent2); }
+    .output-content h3 { font-size: 15px; }
+    .output-content p { margin-bottom: 10px; }
+    .output-content ul, .output-content ol { padding-left: 20px; margin-bottom: 12px; }
+    .output-content li { margin-bottom: 4px; }
+    .output-content strong { color: var(--accent); font-weight: 600; }
+    .output-content code {
+      font-family: var(--font-mono);
+      background: var(--bg3);
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 12px;
+      color: var(--accent2);
+    }
+    .output-content pre {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    .output-content pre code { background: none; padding: 0; }
+    .output-content hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+    .output-content blockquote {
+      border-left: 3px solid var(--accent);
+      padding-left: 14px;
+      color: var(--text2);
+      font-style: italic;
+      margin: 12px 0;
+    }
+
+    /* ── Quiz ──────────────────────────────────────────────── */
+    .quiz-grid { display: flex; flex-direction: column; gap: 20px; }
+    .quiz-q {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .quiz-q-num {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .quiz-q-text { font-size: 15px; font-weight: 500; margin-bottom: 12px; }
+    .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+    .quiz-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all .15s;
+      font-size: 14px;
+    }
+    .quiz-option:hover { border-color: var(--accent2); background: rgba(90,255,244,.05); }
+    .quiz-option.correct { border-color: var(--accent); background: rgba(232,255,90,.08); color: var(--accent); }
+    .quiz-option.wrong { border-color: var(--accent3); background: rgba(255,90,138,.08); color: var(--accent3); }
+    .quiz-answer {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: rgba(232,255,90,.07);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--accent);
+      display: none;
+    }
+    .quiz-answer.show { display: block; }
+
+    /* ── Flashcards ────────────────────────────────────────── */
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+    .flashcard {
+      perspective: 800px;
+      height: 160px;
+      cursor: pointer;
+    }
+    .flashcard-inner {
+      position: relative;
+      width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      transition: transform .5s cubic-bezier(.4,0,.2,1);
+    }
+    .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+    .flashcard-front, .flashcard-back {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .flashcard-front {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+    }
+    .flashcard-back {
+      background: linear-gradient(135deg, rgba(232,255,90,.1), rgba(90,255,244,.08));
+      border: 1px solid rgba(232,255,90,.25);
+      transform: rotateY(180deg);
+    }
+    .flashcard-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text2); margin-bottom: 8px; }
+    .flashcard-text { font-size: 14px; font-weight: 500; line-height: 1.5; }
+    .flashcard-front .flashcard-text { color: var(--accent2); }
+    .flashcard-back .flashcard-text { color: var(--accent); }
+
+    /* ── Study plan day cards ───────────────────────────────── */
+    /* (plan rendered as markdown in output) */
+
+    /* ── Error ──────────────────────────────────────────────── */
+    .error-msg {
+      background: rgba(255,90,138,.08);
+      border: 1px solid rgba(255,90,138,.3);
+      border-radius: 10px;
+      padding: 14px 18px;
+      color: var(--accent3);
+      font-size: 13px;
+      display: none;
+    }
+    .error-msg.visible { display: flex; gap: 10px; align-items: center; }
+
+    /* ── Animations ─────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; flex-direction: row; flex-wrap: wrap; padding: 16px; }
+      .nav { flex-direction: row; flex-wrap: wrap; }
+      .main { padding: 24px 20px; }
+      .row { grid-template-columns: 1fr; }
+    }
+
+    /* ── Tag badges ─────────────────────────────────────────── */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(232,255,90,.12);
+      color: var(--accent);
+      border: 1px solid rgba(232,255,90,.25);
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">S</div>
+      <span class="logo-text">Study<span>Mind</span></span>
+    </div>
+
+    <p class="nav-label">Tools</p>
+    <ul class="nav">
+      <li><a onclick="showTab('doubts')" class="active" id="nav-doubts">
+        <i class="fa-solid fa-circle-question"></i> Ask a Doubt
+        <span class="nav-dot"></span>
+      </a></li>
+      <li><a onclick="showTab('summarize')" id="nav-summarize">
+        <i class="fa-solid fa-file-lines"></i> Summarize Notes
+        <span class="nav-dot"></span>
+      </a></li>
+      <li><a onclick="showTab('quiz')" id="nav-quiz">
+        <i class="fa-solid fa-list-check"></i> Generate Quiz
+        <span class="nav-dot"></span>
+      </a></li>
+      <li><a onclick="showTab('flashcards')" id="nav-flashcards">
+        <i class="fa-solid fa-layer-group"></i> Flashcards
+        <span class="nav-dot"></span>
+      </a></li>
+      <li><a onclick="showTab('studyplan')" id="nav-studyplan">
+        <i class="fa-solid fa-calendar-days"></i> Study Plan
+        <span class="nav-dot"></span>
+      </a></li>
+    </ul>
+
+    <div class="api-config">
+      <label>Backend URL</label>
+      <input type="text" id="apiBase" value="http://localhost:5000" placeholder="http://localhost:5000" />
+    </div>
+  </aside>
+
+  <!-- ── Main ────────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Ask a Doubt -->
+    <div class="tab-pane active" id="tab-doubts">
+      <div class="page-header">
+        <h1>Ask a <em>Doubt</em></h1>
+        <p>Get instant, expert-level answers to any subject question.</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-circle-question"></i> Your Question</div>
+        <div class="row">
+          <div class="field">
+            <label>Subject</label>
+            <select id="d-subject">
+              <option value="Mathematics">Mathematics</option>
+              <option value="Physics">Physics</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Biology">Biology</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="History">History</option>
+              <option value="Economics">Economics</option>
+              <option value="English">English</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Question</label>
+          <textarea id="d-question" placeholder="e.g. Explain the difference between mitosis and meiosis…"></textarea>
+        </div>
+        <button class="btn btn-primary" id="btn-doubts" onclick="submitDoubt()">
+          <div class="spinner"></div>
+          <span class="btn-label"><i class="fa-solid fa-bolt"></i>&nbsp; Get Answer</span>
+        </button>
+      </div>
+      <div class="error-msg" id="err-doubts"><i class="fa-solid fa-triangle-exclamation"></i><span></span></div>
+      <div class="output" id="out-doubts">
+        <div class="output-header">
+          <span class="output-label"><i class="fa-solid fa-graduation-cap"></i> &nbsp;Answer</span>
+          <button class="btn btn-ghost" onclick="copyOutput('out-doubts')"><i class="fa-solid fa-copy"></i></button>
+        </div>
+        <div class="output-content" id="out-doubts-content"></div>
+      </div>
+    </div>
+
+    <!-- Summarize -->
+    <div class="tab-pane" id="tab-summarize">
+      <div class="page-header">
+        <h1>Summarize <em>Notes</em></h1>
+        <p>Paste any text or notes and get a clean, structured summary.</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-file-lines"></i> Input Text</div>
+        <div class="field">
+          <label>Paste your notes</label>
+          <textarea id="s-text" placeholder="Paste lecture notes, textbook passages, articles…" style="min-height:180px;"></textarea>
+        </div>
+        <div class="field">
+          <label>Summary Detail</label>
+          <select id="s-detail">
+            <option value="short">Short — bullet points</option>
+            <option value="medium" selected>Medium — paragraphs + bullets</option>
+            <option value="detailed">Detailed — structured outline</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btn-summarize" onclick="submitSummarize()">
+          <div class="spinner"></div>
+          <span class="btn-label"><i class="fa-solid fa-wand-magic-sparkles"></i>&nbsp; Summarize</span>
+        </button>
+      </div>
+      <div class="error-msg" id="err-summarize"><i class="fa-solid fa-triangle-exclamation"></i><span></span></div>
+      <div class="output" id="out-summarize">
+        <div class="output-header">
+          <span class="output-label"><i class="fa-solid fa-align-left"></i> &nbsp;Summary</span>
+          <button class="btn btn-ghost" onclick="copyOutput('out-summarize')"><i class="fa-solid fa-copy"></i></button>
+        </div>
+        <div class="output-content" id="out-summarize-content"></div>
+      </div>
+    </div>
+
+    <!-- Quiz -->
+    <div class="tab-pane" id="tab-quiz">
+      <div class="page-header">
+        <h1>Generate a <em>Quiz</em></h1>
+        <p>Auto-create practice questions on any topic instantly.</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-list-check"></i> Quiz Settings</div>
+        <div class="field">
+          <label>Topic</label>
+          <input type="text" id="q-topic" placeholder="e.g. Newton's Laws of Motion" />
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Number of Questions</label>
+            <select id="q-num">
+              <option value="3">3</option>
+              <option value="5" selected>5</option>
+              <option value="8">8</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Question Type</label>
+            <select id="q-type">
+              <option value="mcq">Multiple Choice (MCQ)</option>
+              <option value="truefalse">True / False</option>
+              <option value="short">Short Answer</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btn-quiz" onclick="submitQuiz()">
+          <div class="spinner"></div>
+          <span class="btn-label"><i class="fa-solid fa-list-check"></i>&nbsp; Generate Quiz</span>
+        </button>
+      </div>
+      <div class="error-msg" id="err-quiz"><i class="fa-solid fa-triangle-exclamation"></i><span></span></div>
+      <div class="output" id="out-quiz">
+        <div class="output-header">
+          <span class="output-label"><i class="fa-solid fa-trophy"></i> &nbsp;Quiz</span>
+          <span id="quiz-score-badge" class="badge" style="display:none"></span>
+        </div>
+        <div id="out-quiz-content"></div>
+      </div>
+    </div>
+
+    <!-- Flashcards -->
+    <div class="tab-pane" id="tab-flashcards">
+      <div class="page-header">
+        <h1>Make <em>Flashcards</em></h1>
+        <p>Turn any topic or notes into interactive study cards.</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-layer-group"></i> Flashcard Source</div>
+        <div class="field">
+          <label>Topic (quick mode)</label>
+          <input type="text" id="fc-topic" placeholder="e.g. Photosynthesis" />
+        </div>
+        <div class="field">
+          <label>Or paste notes (detailed mode)</label>
+          <textarea id="fc-text" placeholder="Paste your notes here…"></textarea>
+        </div>
+        <div class="field">
+          <label>Number of Cards</label>
+          <select id="fc-count">
+            <option value="5">5</option>
+            <option value="8" selected>8</option>
+            <option value="12">12</option>
+            <option value="20">20</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btn-flashcards" onclick="submitFlashcards()">
+          <div class="spinner"></div>
+          <span class="btn-label"><i class="fa-solid fa-layer-group"></i>&nbsp; Create Cards</span>
+        </button>
+      </div>
+      <div class="error-msg" id="err-flashcards"><i class="fa-solid fa-triangle-exclamation"></i><span></span></div>
+      <div class="output" id="out-flashcards">
+        <div class="output-header">
+          <span class="output-label"><i class="fa-regular fa-hand-pointer"></i> &nbsp;Click cards to flip</span>
+        </div>
+        <div class="cards-grid" id="out-flashcards-content"></div>
+      </div>
+    </div>
+
+    <!-- Study Plan -->
+    <div class="tab-pane" id="tab-studyplan">
+      <div class="page-header">
+        <h1>Build a <em>Study Plan</em></h1>
+        <p>Get a personalised, day-by-day learning schedule.</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-calendar-days"></i> Plan Details</div>
+        <div class="row">
+          <div class="field">
+            <label>Subject / Topic</label>
+            <input type="text" id="sp-subject" placeholder="e.g. Organic Chemistry" />
+          </div>
+          <div class="field">
+            <label>Duration (days)</label>
+            <select id="sp-days">
+              <option value="3">3 days</option>
+              <option value="7" selected>1 week</option>
+              <option value="14">2 weeks</option>
+              <option value="30">1 month</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Level</label>
+            <select id="sp-level">
+              <option value="beginner">Beginner</option>
+              <option value="intermediate" selected>Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Goal</label>
+            <input type="text" id="sp-goal" placeholder="e.g. pass my final exam" />
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btn-studyplan" onclick="submitStudyPlan()">
+          <div class="spinner"></div>
+          <span class="btn-label"><i class="fa-solid fa-calendar-days"></i>&nbsp; Generate Plan</span>
+        </button>
+      </div>
+      <div class="error-msg" id="err-studyplan"><i class="fa-solid fa-triangle-exclamation"></i><span></span></div>
+      <div class="output" id="out-studyplan">
+        <div class="output-header">
+          <span class="output-label"><i class="fa-solid fa-map"></i> &nbsp;Your Study Plan</span>
+          <button class="btn btn-ghost" onclick="copyOutput('out-studyplan')"><i class="fa-solid fa-copy"></i></button>
+        </div>
+        <div class="output-content" id="out-studyplan-content"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── Scripts ─────────────────────────────────────────────────────── -->
+<script>
+  // Markdown → HTML (preserves LaTeX blocks for KaTeX to render)
+  function md(text) {
+    // 1. Stash LaTeX blocks so they aren't touched by markdown escaping
+    const stash = [];
+    text = text
+      // block math  \[ ... \]
+      .replace(/\\\[[\s\S]*?\\\]/g, m => { stash.push(m); return `%%MATH${stash.length-1}%%`; })
+      // inline math \( ... \)
+      .replace(/\\\([\s\S]*?\\\)/g, m => { stash.push(m); return `%%MATH${stash.length-1}%%`; })
+      // dollar-sign block $$...$$
+      .replace(/\$\$[\s\S]*?\$\$/g, m => { stash.push(m); return `%%MATH${stash.length-1}%%`; })
+      // dollar-sign inline $...$
+      .replace(/\$[^$\n]+\$/g, m => { stash.push(m); return `%%MATH${stash.length-1}%%`; });
+
+    // 2. Escape HTML (won't touch stash tokens)
+    text = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    // 3. Markdown formatting
+    text = text
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/^---$/gm, '<hr>')
+      .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+      .replace(/^\* (.+)$/gm, '<li>$1</li>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+      .replace(/\n{2,}/g, '</p><p>')
+      .replace(/\n/g, '<br>');
+
+    // 4. Restore LaTeX stash tokens (un-escaped so KaTeX can read them)
+    text = text.replace(/%%MATH(\d+)%%/g, (_, i) => stash[+i]);
+
+    return text;
+  }
+
+  // After setting innerHTML, run KaTeX auto-render on that element
+  function renderMath(el) {
+    if (window.renderMathInElement) {
+      renderMathInElement(el, {
+        delimiters: [
+          { left: '\\[', right: '\\]', display: true  },
+          { left: '\\(', right: '\\)', display: false },
+          { left: '$$',  right: '$$',  display: true  },
+          { left: '$',   right: '$',   display: false }
+        ],
+        throwOnError: false
+      });
+    }
+  }
+
+  function getBase() {
+    return document.getElementById('apiBase').value.replace(/\/$/, '');
+  }
+
+  function showTab(name) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav li a').forEach(a => a.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    btn.classList.toggle('loading', loading);
+    btn.disabled = loading;
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById('err-' + id);
+    el.querySelector('span').textContent = msg;
+    el.classList.add('visible');
+  }
+  function clearError(id) {
+    document.getElementById('err-' + id).classList.remove('visible');
+  }
+
+  function showOutput(id) {
+    document.getElementById('out-' + id).classList.add('visible');
+  }
+
+  function copyOutput(outId) {
+    const txt = document.getElementById(outId).innerText;
+    navigator.clipboard.writeText(txt).then(() => alert('Copied!'));
+  }
+
+  // ── 1. Answer Doubt ──────────────────────────────────────────────
+  async function submitDoubt() {
+    const question = document.getElementById('d-question').value.trim();
+    const subject  = document.getElementById('d-subject').value;
+    if (!question) return showError('doubts', 'Please enter a question.');
+    clearError('doubts');
+    setLoading('btn-doubts', true);
+    try {
+      const res  = await fetch(getBase() + '/api/answer', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ question, subject })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const dc = document.getElementById('out-doubts-content'); dc.innerHTML = md(data.answer); renderMath(dc);
+      showOutput('doubts');
+    } catch (e) {
+      showError('doubts', e.message || 'Server error. Is the backend running?');
+    } finally { setLoading('btn-doubts', false); }
+  }
+
+  // ── 2. Summarize ─────────────────────────────────────────────────
+  async function submitSummarize() {
+    const text   = document.getElementById('s-text').value.trim();
+    const detail = document.getElementById('s-detail').value;
+    if (!text) return showError('summarize', 'Please paste some text to summarize.');
+    clearError('summarize');
+    setLoading('btn-summarize', true);
+    try {
+      const res  = await fetch(getBase() + '/api/summarize', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ text, detail })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const sc = document.getElementById('out-summarize-content'); sc.innerHTML = md(data.summary); renderMath(sc);
+      showOutput('summarize');
+    } catch (e) {
+      showError('summarize', e.message || 'Server error.');
+    } finally { setLoading('btn-summarize', false); }
+  }
+
+  // ── 3. Quiz ───────────────────────────────────────────────────────
+  let quizData = [];
+  let quizAnswered = 0;
+  let quizCorrect = 0;
+
+  async function submitQuiz() {
+    const topic = document.getElementById('q-topic').value.trim();
+    const num   = document.getElementById('q-num').value;
+    const type  = document.getElementById('q-type').value;
+    if (!topic) return showError('quiz', 'Please enter a topic.');
+    clearError('quiz');
+    setLoading('btn-quiz', true);
+    quizData = []; quizAnswered = 0; quizCorrect = 0;
+    try {
+      const res  = await fetch(getBase() + '/api/quiz', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ topic, num_questions: num, type })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      quizData = data.quiz || [];
+      if (!quizData.length) throw new Error('No questions returned.');
+      renderQuiz(quizData);
+      showOutput('quiz');
+      document.getElementById('quiz-score-badge').style.display = 'none';
+    } catch (e) {
+      showError('quiz', e.message || 'Server error.');
+    } finally { setLoading('btn-quiz', false); }
+  }
+
+  function renderQuiz(questions) {
+    const container = document.getElementById('out-quiz-content');
+    container.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'quiz-grid';
+    questions.forEach((q, idx) => {
+      const div = document.createElement('div');
+      div.className = 'quiz-q';
+      div.id = 'qq-' + idx;
+      let optsHtml = '';
+      if (q.options && q.options.length) {
+        optsHtml = '<div class="quiz-options">' + q.options.map((opt, oi) =>
+          `<div class="quiz-option" onclick="checkAnswer(${idx}, '${esc(opt)}', '${esc(q.answer)}', this)">${opt}</div>`
+        ).join('') + '</div>';
+      }
+      div.innerHTML = `
+        <div class="quiz-q-num">Q ${idx+1} of ${questions.length}</div>
+        <div class="quiz-q-text">${q.question}</div>
+        ${optsHtml}
+        <div class="quiz-answer" id="qa-${idx}"><strong>Answer:</strong> ${q.answer}</div>
+        ${!q.options ? `<button class="btn btn-ghost" onclick="revealAnswer(${idx})" style="margin-top:10px;font-size:12px;padding:7px 14px"><i class='fa-solid fa-eye'></i>&nbsp;Show Answer</button>` : ''}
+      `;
+      grid.appendChild(div);
+    });
+    container.appendChild(grid);
+  }
+
+  function esc(s) { return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+  function checkAnswer(idx, chosen, correct, el) {
+    const parent = el.parentElement;
+    if (parent.querySelector('.correct') || parent.querySelector('.wrong')) return; // already answered
+    const isCorrect = chosen.includes('✓') || chosen === correct;
+    el.classList.add(isCorrect ? 'correct' : 'wrong');
+    if (!isCorrect) {
+      Array.from(parent.children).forEach(opt => {
+        if (opt.textContent.includes('✓') || opt.textContent === correct) opt.classList.add('correct');
+      });
+    }
+    document.getElementById('qa-' + idx).classList.add('show');
+    quizAnswered++;
+    if (isCorrect) quizCorrect++;
+    if (quizAnswered === quizData.length) {
+      const badge = document.getElementById('quiz-score-badge');
+      badge.textContent = `Score: ${quizCorrect}/${quizData.length}`;
+      badge.style.display = 'inline-block';
+    }
+  }
+
+  function revealAnswer(idx) {
+    document.getElementById('qa-' + idx).classList.add('show');
+  }
+
+  // ── 4. Flashcards ─────────────────────────────────────────────────
+  async function submitFlashcards() {
+    const topic = document.getElementById('fc-topic').value.trim();
+    const text  = document.getElementById('fc-text').value.trim();
+    const count = document.getElementById('fc-count').value;
+    if (!topic && !text) return showError('flashcards', 'Enter a topic or paste notes.');
+    clearError('flashcards');
+    setLoading('btn-flashcards', true);
+    try {
+      const res  = await fetch(getBase() + '/api/flashcards', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ topic, text, count })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const cards = data.flashcards || [];
+      if (!cards.length) throw new Error('No cards returned.');
+      renderFlashcards(cards);
+      showOutput('flashcards');
+    } catch (e) {
+      showError('flashcards', e.message || 'Server error.');
+    } finally { setLoading('btn-flashcards', false); }
+  }
+
+  function renderFlashcards(cards) {
+    const grid = document.getElementById('out-flashcards-content');
+    grid.innerHTML = '';
+    cards.forEach(c => {
+      const fc = document.createElement('div');
+      fc.className = 'flashcard';
+      fc.onclick = () => fc.classList.toggle('flipped');
+      fc.innerHTML = `
+        <div class="flashcard-inner">
+          <div class="flashcard-front">
+            <div class="flashcard-label">Question</div>
+            <div class="flashcard-text">${c.front}</div>
+          </div>
+          <div class="flashcard-back">
+            <div class="flashcard-label">Answer</div>
+            <div class="flashcard-text">${c.back}</div>
+          </div>
+        </div>`;
+      grid.appendChild(fc);
+    });
+  }
+
+  // ── 5. Study Plan ──────────────────────────────────────────────────
+  async function submitStudyPlan() {
+    const subject = document.getElementById('sp-subject').value.trim();
+    const days    = document.getElementById('sp-days').value;
+    const level   = document.getElementById('sp-level').value;
+    const goal    = document.getElementById('sp-goal').value.trim() || 'master the subject';
+    if (!subject) return showError('studyplan', 'Please enter a subject or topic.');
+    clearError('studyplan');
+    setLoading('btn-studyplan', true);
+    try {
+      const res  = await fetch(getBase() + '/api/studyplan', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ subject, days, level, goal })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const pc = document.getElementById('out-studyplan-content'); pc.innerHTML = md(data.plan); renderMath(pc);
+      showOutput('studyplan');
+    } catch (e) {
+      showError('studyplan', e.message || 'Server error.');
+    } finally { setLoading('btn-studyplan', false); }
+  }
+
+  // Enter key shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      const active = document.querySelector('.tab-pane.active').id.replace('tab-','');
+      const map = { doubts: submitDoubt, summarize: submitSummarize, quiz: submitQuiz, flashcards: submitFlashcards, studyplan: submitStudyPlan };
+      if (map[active]) map[active]();
+    }
+  });
+</script>
+</body>
+</html>
