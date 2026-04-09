@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StudyMind — Gemini Academic Assistant</title>
+  <title>StudyMind — Academic Assistant</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+
   <style>
-    /* ── Variables ─────────────────────────────────────────── */
     :root {
       --bg:        #0b0d12;
       --bg2:       #12151d;
@@ -27,10 +27,9 @@
       --font-head: 'Syne', sans-serif;
       --font-body: 'DM Sans', sans-serif;
       --font-mono: 'DM Mono', monospace;
-      --api:       http://localhost:5000;
+      --api:       https://ai-tools-academic-support.onrender.com;
     }
 
-    /* ── Reset & Base ──────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body {
@@ -43,7 +42,6 @@
       overflow-x: hidden;
     }
 
-    /* ── Noise texture overlay ─────────────────────────────── */
     body::before {
       content: '';
       position: fixed;
@@ -54,14 +52,12 @@
       opacity: .5;
     }
 
-    /* ── Layout ────────────────────────────────────────────── */
     .shell {
       display: grid;
       grid-template-columns: 260px 1fr;
       min-height: 100vh;
     }
 
-    /* ── Sidebar ───────────────────────────────────────────── */
     .sidebar {
       background: var(--bg2);
       border-right: 1px solid var(--border);
@@ -74,12 +70,14 @@
       overflow-y: auto;
       z-index: 10;
     }
+
     .logo {
       display: flex;
       align-items: center;
       gap: 10px;
       margin-bottom: 36px;
     }
+
     .logo-icon {
       width: 36px; height: 36px;
       background: var(--accent);
@@ -91,6 +89,7 @@
       font-weight: 800;
       font-family: var(--font-head);
     }
+
     .logo-text { font-family: var(--font-head); font-weight: 800; font-size: 20px; }
     .logo-text span { color: var(--accent); }
 
@@ -102,6 +101,7 @@
       color: var(--text2);
       margin: 0 0 10px 8px;
     }
+
     .nav {
       list-style: none;
       display: flex;
@@ -109,6 +109,7 @@
       gap: 4px;
       margin-bottom: 28px;
     }
+
     .nav li a {
       display: flex;
       align-items: center;
@@ -122,12 +123,15 @@
       transition: all .2s;
       cursor: pointer;
     }
+
     .nav li a:hover, .nav li a.active {
       background: var(--bg3);
       color: var(--text);
     }
+
     .nav li a.active { color: var(--accent); }
     .nav li a i { width: 18px; text-align: center; }
+
     .nav-dot {
       width: 6px; height: 6px;
       border-radius: 50%;
@@ -135,6 +139,7 @@
       margin-left: auto;
       display: none;
     }
+
     .nav li a.active .nav-dot { display: block; }
 
     .api-config {
@@ -144,7 +149,17 @@
       border-radius: 12px;
       border: 1px solid var(--border);
     }
-    .api-config label { font-size: 11px; color: var(--text2); display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+
+    .api-config label {
+      font-size: 11px;
+      color: var(--text2);
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
     .api-config input {
       width: 100%;
       background: var(--bg);
@@ -156,19 +171,17 @@
       font-size: 12px;
       outline: none;
     }
-    .api-config input:focus { border-color: var(--accent); }
 
-    /* ── Main ──────────────────────────────────────────────── */
     .main {
       padding: 40px 48px;
       max-width: 900px;
     }
 
-    /* ── Page header ───────────────────────────────────────── */
     .page-header {
       margin-bottom: 32px;
       animation: fadeUp .5s ease both;
     }
+
     .page-header h1 {
       font-family: var(--font-head);
       font-size: 30px;
@@ -176,19 +189,19 @@
       line-height: 1.2;
       margin-bottom: 6px;
     }
+
     .page-header h1 em {
       font-style: normal;
       background: linear-gradient(90deg, var(--accent), var(--accent2));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+
     .page-header p { color: var(--text2); font-size: 14px; }
 
-    /* ── Tabs ──────────────────────────────────────────────── */
     .tab-pane { display: none; animation: fadeUp .4s ease both; }
     .tab-pane.active { display: block; }
 
-    /* ── Cards ─────────────────────────────────────────────── */
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -196,6 +209,7 @@
       padding: 24px;
       margin-bottom: 20px;
     }
+
     .card-title {
       font-family: var(--font-head);
       font-size: 14px;
@@ -208,12 +222,26 @@
       align-items: center;
       gap: 8px;
     }
+
     .card-title i { color: var(--accent); font-size: 13px; }
 
-    /* ── Form ──────────────────────────────────────────────── */
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-    .field label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .08em; }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
     .field input, .field textarea, .field select {
       background: var(--bg3);
       border: 1px solid var(--border);
@@ -226,11 +254,10 @@
       transition: border-color .2s;
       resize: vertical;
     }
+
     .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
     .field textarea { min-height: 120px; }
-    .field select { appearance: none; cursor: pointer; }
 
-    /* ── Buttons ───────────────────────────────────────────── */
     .btn {
       display: inline-flex;
       align-items: center;
@@ -244,21 +271,26 @@
       font-weight: 700;
       transition: all .2s;
     }
+
     .btn-primary {
       background: var(--accent);
       color: #0b0d12;
     }
-    .btn-primary:hover { background: #d4eb3a; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(232,255,90,.25); }
-    .btn-primary:active { transform: translateY(0); }
-    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .btn-primary:hover {
+      background: #d4eb3a;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(232,255,90,.25);
+    }
+
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
     .btn-ghost {
       background: transparent;
       color: var(--text2);
       border: 1px solid var(--border);
     }
-    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* ── Spinner ───────────────────────────────────────────── */
     .spinner {
       width: 16px; height: 16px;
       border: 2px solid rgba(11,13,18,.4);
@@ -267,10 +299,10 @@
       animation: spin .7s linear infinite;
       display: none;
     }
+
     .loading .spinner { display: block; }
     .loading .btn-label { display: none; }
 
-    /* ── Output area ───────────────────────────────────────── */
     .output {
       background: var(--bg2);
       border: 1px solid var(--border);
@@ -279,13 +311,16 @@
       display: none;
       animation: fadeUp .4s ease both;
     }
+
     .output.visible { display: block; }
+
     .output-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
     }
+
     .output-label {
       font-size: 11px;
       font-weight: 700;
@@ -293,22 +328,25 @@
       letter-spacing: .1em;
       color: var(--accent);
     }
+
     .output-content { color: var(--text); font-size: 14px; line-height: 1.75; }
 
-    /* Markdown-like styling */
     .output-content h1, .output-content h2, .output-content h3 {
       font-family: var(--font-head);
       font-weight: 700;
       color: var(--text);
       margin: 18px 0 8px;
     }
+
     .output-content h1 { font-size: 20px; }
     .output-content h2 { font-size: 17px; color: var(--accent2); }
     .output-content h3 { font-size: 15px; }
     .output-content p { margin-bottom: 10px; }
     .output-content ul, .output-content ol { padding-left: 20px; margin-bottom: 12px; }
     .output-content li { margin-bottom: 4px; }
+
     .output-content strong { color: var(--accent); font-weight: 600; }
+
     .output-content code {
       font-family: var(--font-mono);
       background: var(--bg3);
@@ -317,6 +355,7 @@
       font-size: 12px;
       color: var(--accent2);
     }
+
     .output-content pre {
       background: var(--bg3);
       border: 1px solid var(--border);
@@ -325,24 +364,18 @@
       overflow-x: auto;
       margin: 12px 0;
     }
-    .output-content pre code { background: none; padding: 0; }
-    .output-content hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
-    .output-content blockquote {
-      border-left: 3px solid var(--accent);
-      padding-left: 14px;
-      color: var(--text2);
-      font-style: italic;
-      margin: 12px 0;
-    }
 
-    /* ── Quiz ──────────────────────────────────────────────── */
+    .output-content hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
     .quiz-grid { display: flex; flex-direction: column; gap: 20px; }
+
     .quiz-q {
       background: var(--bg3);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 18px;
     }
+
     .quiz-q-num {
       font-size: 11px;
       font-weight: 700;
@@ -351,8 +384,11 @@
       color: var(--accent);
       margin-bottom: 8px;
     }
+
     .quiz-q-text { font-size: 15px; font-weight: 500; margin-bottom: 12px; }
+
     .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+
     .quiz-option {
       display: flex;
       align-items: center;
@@ -364,9 +400,11 @@
       transition: all .15s;
       font-size: 14px;
     }
+
     .quiz-option:hover { border-color: var(--accent2); background: rgba(90,255,244,.05); }
     .quiz-option.correct { border-color: var(--accent); background: rgba(232,255,90,.08); color: var(--accent); }
     .quiz-option.wrong { border-color: var(--accent3); background: rgba(255,90,138,.08); color: var(--accent3); }
+
     .quiz-answer {
       margin-top: 12px;
       padding: 10px 14px;
@@ -376,22 +414,26 @@
       color: var(--accent);
       display: none;
     }
+
     .quiz-answer.show { display: block; }
 
-    /* ── Flashcards ────────────────────────────────────────── */
     .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+
     .flashcard {
       perspective: 800px;
       height: 160px;
       cursor: pointer;
     }
+
     .flashcard-inner {
       position: relative;
       width: 100%; height: 100%;
       transform-style: preserve-3d;
       transition: transform .5s cubic-bezier(.4,0,.2,1);
     }
+
     .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+
     .flashcard-front, .flashcard-back {
       position: absolute;
       inset: 0;
@@ -404,24 +446,31 @@
       align-items: center;
       text-align: center;
     }
+
     .flashcard-front {
       background: var(--bg3);
       border: 1px solid var(--border);
     }
+
     .flashcard-back {
       background: linear-gradient(135deg, rgba(232,255,90,.1), rgba(90,255,244,.08));
       border: 1px solid rgba(232,255,90,.25);
       transform: rotateY(180deg);
     }
-    .flashcard-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text2); margin-bottom: 8px; }
+
+    .flashcard-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text2);
+      margin-bottom: 8px;
+    }
+
     .flashcard-text { font-size: 14px; font-weight: 500; line-height: 1.5; }
     .flashcard-front .flashcard-text { color: var(--accent2); }
     .flashcard-back .flashcard-text { color: var(--accent); }
 
-    /* ── Study plan day cards ───────────────────────────────── */
-    /* (plan rendered as markdown in output) */
-
-    /* ── Error ──────────────────────────────────────────────── */
     .error-msg {
       background: rgba(255,90,138,.08);
       border: 1px solid rgba(255,90,138,.3);
@@ -430,26 +479,11 @@
       color: var(--accent3);
       font-size: 13px;
       display: none;
+      margin-bottom: 16px;
     }
+
     .error-msg.visible { display: flex; gap: 10px; align-items: center; }
 
-    /* ── Animations ─────────────────────────────────────────── */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(18px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Responsive ─────────────────────────────────────────── */
-    @media (max-width: 768px) {
-      .shell { grid-template-columns: 1fr; }
-      .sidebar { position: relative; height: auto; flex-direction: row; flex-wrap: wrap; padding: 16px; }
-      .nav { flex-direction: row; flex-wrap: wrap; }
-      .main { padding: 24px 20px; }
-      .row { grid-template-columns: 1fr; }
-    }
-
-    /* ── Tag badges ─────────────────────────────────────────── */
     .badge {
       display: inline-block;
       padding: 3px 10px;
@@ -460,12 +494,25 @@
       color: var(--accent);
       border: 1px solid rgba(232,255,90,.25);
     }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; flex-direction: row; flex-wrap: wrap; padding: 16px; }
+      .nav { flex-direction: row; flex-wrap: wrap; }
+      .main { padding: 24px 20px; }
+      .row { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 <div class="shell">
-
-  <!-- ── Sidebar ─────────────────────────────────────────────────── -->
   <aside class="sidebar">
     <div class="logo">
       <div class="logo-icon">S</div>
@@ -474,35 +521,19 @@
 
     <p class="nav-label">Tools</p>
     <ul class="nav">
-      <li><a onclick="showTab('doubts')" class="active" id="nav-doubts">
-        <i class="fa-solid fa-circle-question"></i> Ask a Doubt
-        <span class="nav-dot"></span>
-      </a></li>
-      <li><a onclick="showTab('summarize')" id="nav-summarize">
-        <i class="fa-solid fa-file-lines"></i> Summarize Notes
-        <span class="nav-dot"></span>
-      </a></li>
-      <li><a onclick="showTab('quiz')" id="nav-quiz">
-        <i class="fa-solid fa-list-check"></i> Generate Quiz
-        <span class="nav-dot"></span>
-      </a></li>
-      <li><a onclick="showTab('flashcards')" id="nav-flashcards">
-        <i class="fa-solid fa-layer-group"></i> Flashcards
-        <span class="nav-dot"></span>
-      </a></li>
-      <li><a onclick="showTab('studyplan')" id="nav-studyplan">
-        <i class="fa-solid fa-calendar-days"></i> Study Plan
-        <span class="nav-dot"></span>
-      </a></li>
+      <li><a onclick="showTab('doubts')" class="active" id="nav-doubts"><i class="fa-solid fa-circle-question"></i> Ask a Doubt <span class="nav-dot"></span></a></li>
+      <li><a onclick="showTab('summarize')" id="nav-summarize"><i class="fa-solid fa-file-lines"></i> Summarize Notes <span class="nav-dot"></span></a></li>
+      <li><a onclick="showTab('quiz')" id="nav-quiz"><i class="fa-solid fa-list-check"></i> Generate Quiz <span class="nav-dot"></span></a></li>
+      <li><a onclick="showTab('flashcards')" id="nav-flashcards"><i class="fa-solid fa-layer-group"></i> Flashcards <span class="nav-dot"></span></a></li>
+      <li><a onclick="showTab('studyplan')" id="nav-studyplan"><i class="fa-solid fa-calendar-days"></i> Study Plan <span class="nav-dot"></span></a></li>
     </ul>
 
     <div class="api-config">
       <label>Backend URL</label>
-      <input type="text" id="apiBase" value="http://localhost:5000" placeholder="http://localhost:5000" />
+      <input type="text" id="apiBase" value="https://ai-tools-academic-support.onrender.com" placeholder="https://ai-tools-academic-support.onrender.com" />
     </div>
   </aside>
 
-  <!-- ── Main ────────────────────────────────────────────────────── -->
   <main class="main">
 
     <!-- Ask a Doubt -->
@@ -723,26 +754,17 @@
   </main>
 </div>
 
-<!-- ── Scripts ─────────────────────────────────────────────────────── -->
 <script>
-  // Markdown → HTML (preserves LaTeX blocks for KaTeX to render)
   function md(text) {
-    // 1. Stash LaTeX blocks so they aren't touched by markdown escaping
     const stash = [];
     text = text
-      // block math  \[ ... \]
       .replace(/\\\[[\s\S]*?\\\]/g, m => { stash.push(m); return `%%MATH${stash.length-1}%%`; })
-      // inline math \( ... \)
       .replace(/\\\([\s\S]*?\\\)/g, m => { stash.push(m); return `%%MATH${stash.length-1}%%`; })
-      // dollar-sign block $$...$$
       .replace(/\$\$[\s\S]*?\$\$/g, m => { stash.push(m); return `%%MATH${stash.length-1}%%`; })
-      // dollar-sign inline $...$
       .replace(/\$[^$\n]+\$/g, m => { stash.push(m); return `%%MATH${stash.length-1}%%`; });
 
-    // 2. Escape HTML (won't touch stash tokens)
     text = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-    // 3. Markdown formatting
     text = text
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
@@ -759,13 +781,10 @@
       .replace(/\n{2,}/g, '</p><p>')
       .replace(/\n/g, '<br>');
 
-    // 4. Restore LaTeX stash tokens (un-escaped so KaTeX can read them)
     text = text.replace(/%%MATH(\d+)%%/g, (_, i) => stash[+i]);
-
     return text;
   }
 
-  // After setting innerHTML, run KaTeX auto-render on that element
   function renderMath(el) {
     if (window.renderMathInElement) {
       renderMathInElement(el, {
@@ -781,7 +800,7 @@
   }
 
   function getBase() {
-    return document.getElementById('apiBase').value.replace(/\/$/, '');
+    return "https://ai-tools-academic-support.onrender.com";
   }
 
   function showTab(name) {
@@ -802,6 +821,7 @@
     el.querySelector('span').textContent = msg;
     el.classList.add('visible');
   }
+
   function clearError(id) {
     document.getElementById('err-' + id).classList.remove('visible');
   }
@@ -815,7 +835,6 @@
     navigator.clipboard.writeText(txt).then(() => alert('Copied!'));
   }
 
-  // ── 1. Answer Doubt ──────────────────────────────────────────────
   async function submitDoubt() {
     const question = document.getElementById('d-question').value.trim();
     const subject  = document.getElementById('d-subject').value;
@@ -824,19 +843,23 @@
     setLoading('btn-doubts', true);
     try {
       const res  = await fetch(getBase() + '/api/answer', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ question, subject })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      const dc = document.getElementById('out-doubts-content'); dc.innerHTML = md(data.answer); renderMath(dc);
+      const dc = document.getElementById('out-doubts-content');
+      dc.innerHTML = md(data.answer);
+      renderMath(dc);
       showOutput('doubts');
     } catch (e) {
       showError('doubts', e.message || 'Server error. Is the backend running?');
-    } finally { setLoading('btn-doubts', false); }
+    } finally {
+      setLoading('btn-doubts', false);
+    }
   }
 
-  // ── 2. Summarize ─────────────────────────────────────────────────
   async function submitSummarize() {
     const text   = document.getElementById('s-text').value.trim();
     const detail = document.getElementById('s-detail').value;
@@ -845,19 +868,23 @@
     setLoading('btn-summarize', true);
     try {
       const res  = await fetch(getBase() + '/api/summarize', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ text, detail })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      const sc = document.getElementById('out-summarize-content'); sc.innerHTML = md(data.summary); renderMath(sc);
+      const sc = document.getElementById('out-summarize-content');
+      sc.innerHTML = md(data.summary);
+      renderMath(sc);
       showOutput('summarize');
     } catch (e) {
       showError('summarize', e.message || 'Server error.');
-    } finally { setLoading('btn-summarize', false); }
+    } finally {
+      setLoading('btn-summarize', false);
+    }
   }
 
-  // ── 3. Quiz ───────────────────────────────────────────────────────
   let quizData = [];
   let quizAnswered = 0;
   let quizCorrect = 0;
@@ -870,9 +897,11 @@
     clearError('quiz');
     setLoading('btn-quiz', true);
     quizData = []; quizAnswered = 0; quizCorrect = 0;
+
     try {
       const res  = await fetch(getBase() + '/api/quiz', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ topic, num_questions: num, type })
       });
       const data = await res.json();
@@ -884,7 +913,9 @@
       document.getElementById('quiz-score-badge').style.display = 'none';
     } catch (e) {
       showError('quiz', e.message || 'Server error.');
-    } finally { setLoading('btn-quiz', false); }
+    } finally {
+      setLoading('btn-quiz', false);
+    }
   }
 
   function renderQuiz(questions) {
@@ -892,16 +923,18 @@
     container.innerHTML = '';
     const grid = document.createElement('div');
     grid.className = 'quiz-grid';
+
     questions.forEach((q, idx) => {
       const div = document.createElement('div');
       div.className = 'quiz-q';
-      div.id = 'qq-' + idx;
       let optsHtml = '';
+
       if (q.options && q.options.length) {
-        optsHtml = '<div class="quiz-options">' + q.options.map((opt, oi) =>
+        optsHtml = '<div class="quiz-options">' + q.options.map(opt =>
           `<div class="quiz-option" onclick="checkAnswer(${idx}, '${esc(opt)}', '${esc(q.answer)}', this)">${opt}</div>`
         ).join('') + '</div>';
       }
+
       div.innerHTML = `
         <div class="quiz-q-num">Q ${idx+1} of ${questions.length}</div>
         <div class="quiz-q-text">${q.question}</div>
@@ -911,24 +944,33 @@
       `;
       grid.appendChild(div);
     });
+
     container.appendChild(grid);
   }
 
-  function esc(s) { return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+  function esc(s) {
+    return (s || '').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+  }
 
   function checkAnswer(idx, chosen, correct, el) {
     const parent = el.parentElement;
-    if (parent.querySelector('.correct') || parent.querySelector('.wrong')) return; // already answered
+    if (parent.querySelector('.correct') || parent.querySelector('.wrong')) return;
+
     const isCorrect = chosen.includes('✓') || chosen === correct;
     el.classList.add(isCorrect ? 'correct' : 'wrong');
+
     if (!isCorrect) {
       Array.from(parent.children).forEach(opt => {
-        if (opt.textContent.includes('✓') || opt.textContent === correct) opt.classList.add('correct');
+        if (opt.textContent.includes('✓') || opt.textContent === correct) {
+          opt.classList.add('correct');
+        }
       });
     }
+
     document.getElementById('qa-' + idx).classList.add('show');
     quizAnswered++;
     if (isCorrect) quizCorrect++;
+
     if (quizAnswered === quizData.length) {
       const badge = document.getElementById('quiz-score-badge');
       badge.textContent = `Score: ${quizCorrect}/${quizData.length}`;
@@ -940,33 +982,42 @@
     document.getElementById('qa-' + idx).classList.add('show');
   }
 
-  // ── 4. Flashcards ─────────────────────────────────────────────────
   async function submitFlashcards() {
     const topic = document.getElementById('fc-topic').value.trim();
     const text  = document.getElementById('fc-text').value.trim();
     const count = document.getElementById('fc-count').value;
+
     if (!topic && !text) return showError('flashcards', 'Enter a topic or paste notes.');
+
     clearError('flashcards');
     setLoading('btn-flashcards', true);
+
     try {
       const res  = await fetch(getBase() + '/api/flashcards', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ topic, text, count })
       });
+
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+
       const cards = data.flashcards || [];
       if (!cards.length) throw new Error('No cards returned.');
+
       renderFlashcards(cards);
       showOutput('flashcards');
     } catch (e) {
       showError('flashcards', e.message || 'Server error.');
-    } finally { setLoading('btn-flashcards', false); }
+    } finally {
+      setLoading('btn-flashcards', false);
+    }
   }
 
   function renderFlashcards(cards) {
     const grid = document.getElementById('out-flashcards-content');
     grid.innerHTML = '';
+
     cards.forEach(c => {
       const fc = document.createElement('div');
       fc.className = 'flashcard';
@@ -986,34 +1037,48 @@
     });
   }
 
-  // ── 5. Study Plan ──────────────────────────────────────────────────
   async function submitStudyPlan() {
     const subject = document.getElementById('sp-subject').value.trim();
     const days    = document.getElementById('sp-days').value;
     const level   = document.getElementById('sp-level').value;
     const goal    = document.getElementById('sp-goal').value.trim() || 'master the subject';
+
     if (!subject) return showError('studyplan', 'Please enter a subject or topic.');
+
     clearError('studyplan');
     setLoading('btn-studyplan', true);
+
     try {
       const res  = await fetch(getBase() + '/api/studyplan', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ subject, days, level, goal })
       });
+
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      const pc = document.getElementById('out-studyplan-content'); pc.innerHTML = md(data.plan); renderMath(pc);
+
+      const pc = document.getElementById('out-studyplan-content');
+      pc.innerHTML = md(data.plan);
+      renderMath(pc);
       showOutput('studyplan');
     } catch (e) {
       showError('studyplan', e.message || 'Server error.');
-    } finally { setLoading('btn-studyplan', false); }
+    } finally {
+      setLoading('btn-studyplan', false);
+    }
   }
 
-  // Enter key shortcuts
   document.addEventListener('keydown', e => {
     if (e.key === 'Enter' && e.ctrlKey) {
       const active = document.querySelector('.tab-pane.active').id.replace('tab-','');
-      const map = { doubts: submitDoubt, summarize: submitSummarize, quiz: submitQuiz, flashcards: submitFlashcards, studyplan: submitStudyPlan };
+      const map = {
+        doubts: submitDoubt,
+        summarize: submitSummarize,
+        quiz: submitQuiz,
+        flashcards: submitFlashcards,
+        studyplan: submitStudyPlan
+      };
       if (map[active]) map[active]();
     }
   });
